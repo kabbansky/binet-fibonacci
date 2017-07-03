@@ -1,8 +1,8 @@
 ---
-- hosts: test-api
+- hosts: '{{ target }}'
   become: yes
   tasks:
-  - name: Install packages required for API 
+  - name: Install packages required for API if missing
     yum:
       name: '{{ item }}'
       state: present
