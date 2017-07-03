@@ -1,0 +1,68 @@
+---
+- hosts: test-chef
+  become: yes
+  tasks:
+  - name: Install packages required for API 
+    yum:
+      name: '{{ item }}'
+      state: present
+    with_items:
+      - python2-pip
+      - python-virtualenv
+      - python-flask
+  
+  - name: Create API user account
+    user:
+      name: test-api
+      state: present
+
+  - name: Create directories
+    file: 
+      path: /opt/api/binet-fibonacci/static
+      state: directory
+      owner: root
+      group: test-api
+      mode: 0755
+
+  - name: Copy executable files
+    copy:
+      src: '{{ item.src }}'
+      dest: '{{ item.dest }}'
+      owner: root
+      group: test-api
+      mode: 0755
+    with_items:
+      - { src: '../binet-fibonacci.py', dest: '/opt/api/binet-fibonacci/binet-fibonacci.py' }
+      - { src: '../wrap.sh', dest: '/opt/api/binet-fibonacci/wrap.sh' }
+        
+  - name: Transform help.html template
+    template:
+      src: './templates/help.html.j2'
+      dest: '/opt/api/binet-fibonacci/static/help.html'
+      owner: root
+      group: test-api
+      mode: 0644
+
+  - name: Add firewall exception
+    firewalld:
+      port: 6765/tcp
+      permanent: true
+      state: enabled
+
+  - name: Reload firewall service
+    service:
+      name: firewalld
+      state: restarted
+
+  - name: Copy service file
+    copy:
+      src: './binet-fibonacci.service'
+      dest: '/usr/lib/systemd/system/binet-fibonacci.service'
+      owner: root
+      mode: 0644
+
+  - name: Run installation script
+    script: ./deploy-api.sh
+    args:
+      creates: '/opt/api/binet-fibonacci/test-api/bin/activate'
+

@@ -1,0 +1,12 @@
+[Unit]
+Description=Python API to get Fibonacci numbers
+After=network.target
+
+[Service]
+ExecStart=/opt/api/binet-fibonacci/wrap.sh
+Restart=on-failure
+User=test-api
+
+[Install]
+WantedBy=multi-user.target
+
